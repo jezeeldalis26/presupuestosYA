@@ -34,7 +34,7 @@ export function AppShell() {
             <Logo />
           </div>
           <NavLink to="/nuevo" className="btn-primary mb-6 w-full px-3 text-sm whitespace-nowrap">
-            <Plus className="size-4.5" /> Nuevo presupuesto
+            <Plus className="size-4 shrink-0" /> Nuevo presupuesto
           </NavLink>
           <nav className="flex flex-1 flex-col gap-1">
             {NAV.map(({ to, label, icon: Icon, end, pending }) => (
