@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -44,6 +47,18 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
+      - name: Publicar capturas en la rama ci-capturas
+        if: always() && github.event_name == 'push'
+        run: |
+          [ -d test-results/screens ] || exit 0
+          SHA=${GITHUB_SHA::7}
+          mkdir -p /tmp/caps && cp test-results/screens/*.png /tmp/caps/
+          cd /tmp/caps
+          git init -q -b ci-capturas
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add . && git commit -qm "Capturas de $SHA"
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-capturas
 
   deploy:
     name: Desplegar en Firebase Hosting
