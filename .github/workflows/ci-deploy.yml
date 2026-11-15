@@ -1,0 +1,80 @@
+name: CI y despliegue
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck, build y pruebas (emuladores)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Build de producción (verificación)
+        run: npx vite build
+      - name: Build para emuladores
+        run: npm run build:emulators
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Reglas de Firestore + flujo E2E (mobile y desktop)
+        run: npm run test:emulators
+      - name: Capturas de pantalla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  deploy:
+    name: Desplegar en Firebase Hosting
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verificar credenciales
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::error::Falta el secret FIREBASE_SERVICE_ACCOUNT (JSON de la cuenta de servicio de Firebase)."
+            exit 1
+          fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+      - name: Build de producción
+        run: npm run build
+      - name: Deploy (Hosting + reglas de Firestore)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx firebase deploy --only hosting,firestore:rules --non-interactive
+      - name: URL pública
+        run: |
+          PROJECT=$(node -p "require('./.firebaserc').projects.default")
+          echo "### 🚀 Desplegado en https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
+          curl -sSf -o /dev/null -w "HTTP %{http_code}\n" "https://$PROJECT.web.app/"

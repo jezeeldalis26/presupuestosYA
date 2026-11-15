@@ -1,0 +1,111 @@
+@import '@fontsource/poppins/300.css';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #03060f;
+  --color-night: #050b1a;
+  --color-navy-950: #071229;
+  --color-navy-900: #0a1a3f;
+  --color-navy-800: #102658;
+  --color-navy-700: #173577;
+  --color-sky-300: #a9dbff;
+  --color-sky-400: #7cc4ff;
+  --color-sky-500: #4aa8f5;
+  --color-sky-600: #2b86d6;
+  --color-mist: #8b97ad;
+
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 0.35s ease-out both;
+  --animate-pop: pop 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-drift: drift 18s ease-in-out infinite alternate;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  @keyframes drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(40px, -30px, 0) scale(1.12); }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-h-dvh bg-night font-sans text-slate-100 antialiased;
+  }
+  ::selection {
+    background: rgb(124 196 255 / 0.35);
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@utility glass {
+  @apply rounded-3xl border border-white/[0.08] bg-white/[0.035] shadow-[0_1px_0_0_rgb(255_255_255/0.06)_inset,0_20px_50px_-24px_rgb(0_0_0/0.8)] backdrop-blur-xl;
+}
+@utility glass-strong {
+  @apply rounded-3xl border border-white/10 bg-navy-950/80 shadow-[0_1px_0_0_rgb(255_255_255/0.07)_inset,0_30px_80px_-30px_rgb(0_0_0/0.9)] backdrop-blur-2xl;
+}
+@utility field {
+  @apply w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-white placeholder:text-mist/70 transition outline-none focus:border-sky-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-sky-400/10 disabled:opacity-60;
+}
+@utility label {
+  @apply mb-1.5 block text-[13px] font-medium text-slate-300;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-[15px] font-medium transition duration-200 select-none active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-linear-to-b from-sky-400 to-sky-600 text-ink shadow-[0_10px_30px_-10px_rgb(74_168_245/0.7)] hover:brightness-110;
+}
+@utility btn-ghost {
+  @apply btn border border-white/10 bg-white/[0.04] text-slate-100 hover:border-white/20 hover:bg-white/[0.08];
+}
+@utility btn-danger {
+  @apply btn bg-rose-500/90 text-white hover:bg-rose-500;
+}
+@utility skeleton {
+  @apply animate-shimmer rounded-xl bg-[linear-gradient(90deg,rgb(255_255_255/0.04)_0%,rgb(255_255_255/0.1)_50%,rgb(255_255_255/0.04)_100%)] bg-[length:200%_100%];
+}
+@utility badge-pending {
+  @apply inline-flex items-center rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-amber-200;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

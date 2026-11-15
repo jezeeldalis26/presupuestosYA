@@ -1,0 +1,41 @@
+{
+  "name": "presupuestosya",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:emulators": "vite --mode emulators",
+    "typecheck": "tsc -b",
+    "build": "tsc -b && vite build",
+    "build:emulators": "tsc -b && vite build --mode emulators",
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "test:rules": "vitest run",
+    "test:e2e": "playwright test",
+    "test:emulators": "firebase emulators:exec --only auth,firestore --project demo-presupuestosya \"npm run test:rules && npm run test:e2e\"",
+    "deploy": "firebase deploy --only hosting,firestore:rules"
+  },
+  "dependencies": {
+    "@fontsource/poppins": "^5.3.0",
+    "firebase": "^13.3.0",
+    "lucide-react": "^1.73.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "firebase-tools": "^15.36.0",
+    "oxlint": "^1.90.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}

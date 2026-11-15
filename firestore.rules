@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// PresupuestosYA — cada usuario solo accede a users/{suUID} y sus subcolecciones.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validCurrency(c) {
+      return c in ['BRL', 'USD', 'EUR', 'VES', 'COP', 'MXN', 'ARS', 'CLP', 'PEN'];
+    }
+
+    // users/{uid}: preferencias { businessName, currency, updatedAt }
+    function validProfile(d) {
+      return d.keys().hasOnly(['businessName', 'currency', 'updatedAt'])
+        && d.keys().hasAll(['businessName', 'currency', 'updatedAt'])
+        && d.businessName is string
+        && d.businessName.size() <= 80
+        && validCurrency(d.currency)
+        && d.updatedAt == request.time;
+    }
+
+    // users/{uid}/services/{id}: tabulador
+    function validService(d) {
+      return d.keys().hasOnly(['name', 'description', 'price', 'unit', 'archived', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['name', 'description', 'price', 'unit', 'archived', 'createdAt', 'updatedAt'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 80
+        && d.description is string && d.description.size() <= 300
+        && d.price is number && d.price >= 0 && d.price <= 1000000000
+        && d.unit in ['servicio', 'hora', 'dia', 'unidad']
+        && d.archived is bool
+        && d.createdAt is timestamp
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validProfile(request.resource.data);
+      allow list, delete: if false;
+
+      match /services/{serviceId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validService(request.resource.data)
+          && request.resource.data.createdAt == request.time;
+        allow update: if isOwner(uid)
+          && validService(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // Todo lo demás está cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
