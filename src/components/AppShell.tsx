@@ -32,7 +32,7 @@ export function AppShell() {
           <div className="px-1 pb-8 pt-1">
             <Logo />
           </div>
-          <NavLink to="/nuevo" className="btn-primary mb-6 w-full">
+          <NavLink to="/nuevo" className="btn-primary mb-6 w-full px-3 text-sm whitespace-nowrap">
             <Plus className="size-4.5" /> Nuevo presupuesto
           </NavLink>
           <nav className="flex flex-1 flex-col gap-1">

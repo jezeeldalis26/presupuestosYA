@@ -220,7 +220,7 @@ function ServiceCard({
           )}
         </div>
       </div>
-      <div className="mt-5 flex items-end justify-between gap-3">
+      <div className="mt-auto flex items-end justify-between gap-3 pt-5">
         <div>
           <p className="text-xl font-semibold tracking-tight text-white">{formatMoney(s.price, currency)}</p>
           <p className="text-xs text-mist">{UNIT_LABEL[s.unit].per}</p>
