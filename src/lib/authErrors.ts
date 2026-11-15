@@ -11,7 +11,11 @@ const MESSAGES: Record<string, string> = {
   'auth/password-does-not-meet-requirements': 'La contraseña no cumple los requisitos mínimos.',
   'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
   'auth/network-request-failed': 'Sin conexión. Revisa tu internet.',
-  'auth/operation-not-allowed': 'El acceso con correo no está habilitado en Firebase.',
+  'auth/operation-not-allowed': 'Este método de acceso no está habilitado.',
+  'auth/popup-closed-by-user': 'Cerraste la ventana de Google antes de terminar.',
+  'auth/cancelled-popup-request': 'Cerraste la ventana de Google antes de terminar.',
+  'auth/unauthorized-domain': 'Este dominio no está autorizado para iniciar sesión con Google.',
+  'auth/account-exists-with-different-credential': 'Ya existe una cuenta con este correo usando otro método de acceso.',
 }
 
 export function authErrorMessage(err: unknown) {

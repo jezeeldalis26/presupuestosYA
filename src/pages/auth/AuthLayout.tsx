@@ -9,13 +9,13 @@ export function AuthLayout({ title, subtitle, children, footer }: { title: strin
       <section className="relative hidden flex-col justify-between p-12 lg:flex">
         <Logo size="lg" />
         <div className="max-w-lg animate-rise">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/5 px-3 py-1 text-xs text-sky-300">
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-400/5 px-3 py-1 text-xs text-brand-300">
             <Sparkles className="size-3.5" /> Presupuestos profesionales en minutos
           </p>
           <h2 className="text-4xl font-semibold leading-[1.15] tracking-tight text-white">
             Tus precios, ordenados.
             <br />
-            <span className="bg-linear-to-r from-sky-300 to-sky-500 bg-clip-text text-transparent">Tus presupuestos, listos YA.</span>
+            <span className="bg-linear-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent">Tus presupuestos, listos YA.</span>
           </h2>
           <p className="mt-5 text-[15px] leading-relaxed text-mist">
             Arma tu tabulador de servicios una sola vez y úsalo para cotizar a cada cliente sin empezar desde cero.
@@ -49,7 +49,7 @@ export function AuthLayout({ title, subtitle, children, footer }: { title: strin
 function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
     <div className="glass p-4">
-      <div className="mb-3 grid size-9 place-items-center rounded-xl bg-sky-400/10 text-sky-300">{icon}</div>
+      <div className="mb-3 grid size-9 place-items-center rounded-xl bg-brand-400/10 text-brand-300">{icon}</div>
       <p className="text-sm font-medium text-white">{title}</p>
       <p className="mt-0.5 text-xs leading-relaxed text-mist">{text}</p>
     </div>

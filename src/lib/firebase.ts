@@ -8,41 +8,58 @@ import {
   type Firestore,
 } from 'firebase/firestore'
 
-const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+const env = import.meta.env
+const useEmulators = env.VITE_USE_EMULATORS === 'true'
+
+/**
+ * Configuración PÚBLICA del Firebase Web SDK del proyecto presupuestosya-e5962.
+ * No es una credencial: Firebase la diseña para ir en el frontend y la seguridad
+ * la aplican las reglas de Firestore y los dominios autorizados de Auth.
+ * Se puede sobrescribir con variables VITE_FIREBASE_* (ver .env.example).
+ */
+const PUBLIC_WEB_CONFIG = {
+  apiKey: 'AIzaSyB3rV6sVWT9TcsjQzo1G5EuUBxkUoTdmX8',
+  authDomain: 'presupuestosya-e5962.firebaseapp.com',
+  projectId: 'presupuestosya-e5962',
+  storageBucket: 'presupuestosya-e5962.firebasestorage.app',
+  messagingSenderId: '932642994111',
+  appId: '1:932642994111:web:2cedc3c1e4b4ce5ab6530a',
 }
 
-/** true cuando el build no tiene la configuración web de Firebase. */
-export const firebaseMissingConfig = !config.apiKey || !config.projectId || !config.appId
+const EMULATOR_CONFIG = {
+  apiKey: 'demo-key',
+  authDomain: 'demo-presupuestosya.firebaseapp.com',
+  projectId: 'demo-presupuestosya',
+  appId: 'demo-app',
+}
 
-let app: FirebaseApp | null = null
-let auth: Auth | null = null
-let db: Firestore | null = null
+const config = useEmulators
+  ? EMULATOR_CONFIG
+  : {
+      apiKey: env.VITE_FIREBASE_API_KEY || PUBLIC_WEB_CONFIG.apiKey,
+      authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || PUBLIC_WEB_CONFIG.authDomain,
+      projectId: env.VITE_FIREBASE_PROJECT_ID || PUBLIC_WEB_CONFIG.projectId,
+      storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || PUBLIC_WEB_CONFIG.storageBucket,
+      messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || PUBLIC_WEB_CONFIG.messagingSenderId,
+      appId: env.VITE_FIREBASE_APP_ID || PUBLIC_WEB_CONFIG.appId,
+    }
 
-if (!firebaseMissingConfig) {
-  app = initializeApp(config)
-  auth = getAuth(app)
-  auth.languageCode = 'es'
-  void setPersistence(auth, browserLocalPersistence)
+const app: FirebaseApp = initializeApp(config)
+const auth: Auth = getAuth(app)
+auth.languageCode = 'es'
+void setPersistence(auth, browserLocalPersistence)
 
-  // Caché local persistente: las recargas reutilizan datos y el listener
-  // solo trae documentos modificados, lo que reduce lecturas facturables.
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-  })
+// Caché local persistente: las recargas reutilizan datos y el listener
+// solo trae documentos modificados, lo que reduce lecturas facturables.
+const db: Firestore = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+})
 
-  if (import.meta.env.VITE_USE_EMULATORS === 'true') {
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
-    connectFirestoreEmulator(db, '127.0.0.1', 8080)
-  }
+if (useEmulators) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
 }
 
 export function getFirebase() {
-  if (!auth || !db) throw new Error('Firebase no está configurado')
-  return { app: app!, auth, db }
+  return { app, auth, db }
 }

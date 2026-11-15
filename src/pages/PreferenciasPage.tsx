@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react'
+import { CheckCircle2, CircleDot, FileText } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { FieldError, PageHeader, Skeleton, Spinner } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
@@ -6,6 +6,7 @@ import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { dbErrorMessage } from '../lib/authErrors'
 import { saveProfile } from '../lib/db'
+import { QUEUED_MSG, commitWrite } from '../lib/write'
 import { CURRENCIES, LIMITS, formatMoney, type Currency } from '../lib/model'
 
 export function PreferenciasPage() {
@@ -16,6 +17,7 @@ export function PreferenciasPage() {
   const [currency, setCurrency] = useState<Currency>(profile.currency)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [savedAt, setSavedAt] = useState<Date | null>(null)
 
   // Sincroniza el formulario cuando llega el perfil.
   useEffect(() => {
@@ -33,8 +35,9 @@ export function PreferenciasPage() {
     if (!name.trim()) return setError('Escribe tu nombre profesional o comercial.')
     setBusy(true)
     try {
-      await saveProfile(user!.uid, { businessName: name, currency })
-      toast('Preferencias guardadas')
+      const r = await commitWrite(saveProfile(user!.uid, { businessName: name, currency }))
+      toast(r === 'queued' ? QUEUED_MSG : 'Preferencias guardadas')
+      setSavedAt(new Date())
     } catch (err) {
       setError(dbErrorMessage(err))
     } finally {
@@ -73,7 +76,20 @@ export function PreferenciasPage() {
                 <p className="mt-1.5 text-[12px] text-mist">Se usará para los precios del tabulador y los nuevos presupuestos.</p>
               </div>
               <FieldError text={error} />
-              <div className="flex justify-end">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="flex items-center gap-1.5 text-[13px]" aria-live="polite">
+                  {busy ? (
+                    <span className="text-mist">Guardando…</span>
+                  ) : dirty ? (
+                    <span className="flex items-center gap-1.5 text-amber-200/90">
+                      <CircleDot className="size-3.5" /> Cambios sin guardar
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-emerald-300/90">
+                      <CheckCircle2 className="size-3.5" /> {savedAt ? 'Guardado' : 'Todo guardado'}
+                    </span>
+                  )}
+                </p>
                 <button type="submit" className="btn-primary" disabled={busy || !dirty}>
                   {busy ? <Spinner /> : 'Guardar cambios'}
                 </button>
@@ -93,16 +109,16 @@ export function PreferenciasPage() {
                 <p className="text-[10px] tracking-widest text-slate-400 uppercase">Emitido por</p>
                 <p className="mt-0.5 truncate text-base font-semibold text-navy-900">{name.trim() || 'Tu nombre comercial'}</p>
               </div>
-              <p className="shrink-0 text-[10px] font-semibold tracking-widest text-sky-600 uppercase">Presupuesto</p>
+              <p className="shrink-0 text-[10px] font-semibold tracking-widest text-brand-600 uppercase">Presupuesto</p>
             </div>
             <div className="mt-4 space-y-2 text-xs">
               <div className="flex justify-between text-slate-500">
                 <span>Servicio de ejemplo</span>
-                <span>{formatMoney(150, currency)}</span>
+                <span>{formatMoney(15000, currency)}</span>
               </div>
               <div className="flex justify-between border-t border-slate-200 pt-2 font-semibold text-navy-900">
                 <span>Total</span>
-                <span>{formatMoney(150, currency)}</span>
+                <span>{formatMoney(15000, currency)}</span>
               </div>
             </div>
           </div>

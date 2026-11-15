@@ -31,6 +31,8 @@ jobs:
       - run: npm ci
       - name: TypeScript
         run: npm run typecheck
+      - name: Pruebas unitarias (importes en centavos)
+        run: npm run test:unit
       - name: Build de producción (verificación)
         run: npx vite build
       - name: Build para emuladores
@@ -88,8 +90,35 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
         run: npx firebase deploy --only hosting,firestore:rules --non-interactive
-      - name: URL pública
+      - name: Verificar URL pública y versión
         run: |
-          PROJECT=$(node -p "require('./.firebaserc').projects.default")
-          echo "### 🚀 Desplegado en https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
-          curl -sSf -o /dev/null -w "HTTP %{http_code}\n" "https://$PROJECT.web.app/"
+          URL="https://presupuestosya-e5962.web.app"
+          curl -sSf -o /dev/null -w "HTTP %{http_code}\n" "$URL/"
+          curl -sSf "$URL/" | grep -q "content=\"$GITHUB_SHA\"" && echo "Versión publicada = $GITHUB_SHA"
+      - name: Reglas en producción bloquean acceso anónimo
+        run: |
+          BASE="https://firestore.googleapis.com/v1/projects/presupuestosya-e5962/databases/(default)/documents"
+          for path in users users/cualquiera users/cualquiera/services; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/$path")
+            echo "$path → $code"
+            [ "$code" = "403" ] || { echo "::error::$path respondió $code (se esperaba 403)"; exit 1; }
+          done
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas en el sitio publicado (Firebase real)
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: npm run test:live
+      - name: Publicar capturas del sitio en vivo
+        if: always()
+        run: |
+          [ -d test-results/screens ] || exit 0
+          mkdir -p /tmp/live && cp test-results/screens/*.png /tmp/live/ 2>/dev/null || exit 0
+          cd /tmp/live
+          git init -q -b ci-capturas-live
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add . && git commit -qm "Capturas en vivo de ${GITHUB_SHA::7}"
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-capturas-live
+      - name: Resumen
+        run: echo "### 🚀 Publicado y verificado en https://presupuestosya-e5962.web.app (commit ${GITHUB_SHA::7})" >> "$GITHUB_STEP_SUMMARY"

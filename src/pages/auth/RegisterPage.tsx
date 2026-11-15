@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { authErrorMessage } from '../../lib/authErrors'
 import { LIMITS } from '../../lib/model'
 import { AuthLayout } from './AuthLayout'
+import { GoogleButton } from './GoogleButton'
 import { PasswordInput } from './PasswordInput'
 
 export function RegisterPage() {
@@ -39,7 +40,7 @@ export function RegisterPage() {
       footer={
         <>
           ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="font-medium text-sky-300 hover:text-sky-200">
+          <Link to="/login" className="font-medium text-brand-300 hover:text-brand-200">
             Inicia sesión
           </Link>
         </>
@@ -69,6 +70,7 @@ export function RegisterPage() {
           {busy ? <Spinner /> : <>Crear cuenta <ArrowRight className="size-4.5" /></>}
         </button>
       </form>
+      <GoogleButton disabled={busy} />
     </AuthLayout>
   )
 }

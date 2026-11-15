@@ -5,6 +5,7 @@ import { FieldError, Spinner } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { authErrorMessage } from '../../lib/authErrors'
 import { AuthLayout } from './AuthLayout'
+import { GoogleButton } from './GoogleButton'
 import { PasswordInput } from './PasswordInput'
 
 export function LoginPage() {
@@ -33,7 +34,7 @@ export function LoginPage() {
       footer={
         <>
           ¿No tienes cuenta?{' '}
-          <Link to="/registro" className="font-medium text-sky-300 hover:text-sky-200">
+          <Link to="/registro" className="font-medium text-brand-300 hover:text-brand-200">
             Crea una gratis
           </Link>
         </>
@@ -47,7 +48,7 @@ export function LoginPage() {
         <div>
           <div className="flex items-center justify-between">
             <label className="label" htmlFor="password">Contraseña</label>
-            <Link to="/recuperar" className="mb-1.5 text-[13px] text-sky-300 hover:text-sky-200">
+            <Link to="/recuperar" className="mb-1.5 text-[13px] text-brand-300 hover:text-brand-200">
               ¿La olvidaste?
             </Link>
           </div>
@@ -58,6 +59,7 @@ export function LoginPage() {
           {busy ? <Spinner /> : <>Iniciar sesión <ArrowRight className="size-4.5" /></>}
         </button>
       </form>
+      <GoogleButton disabled={busy} />
     </AuthLayout>
   )
 }

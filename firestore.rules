@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     function validCurrency(c) {
-      return c in ['BRL', 'USD', 'EUR', 'VES', 'COP', 'MXN', 'ARS', 'CLP', 'PEN'];
+      return c in ['BRL', 'USD', 'EUR', 'VES'];
     }
 
     // users/{uid}: preferencias { businessName, currency, updatedAt }
@@ -24,11 +24,12 @@ service cloud.firestore {
 
     // users/{uid}/services/{id}: tabulador
     function validService(d) {
-      return d.keys().hasOnly(['name', 'description', 'price', 'unit', 'archived', 'createdAt', 'updatedAt'])
-        && d.keys().hasAll(['name', 'description', 'price', 'unit', 'archived', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['name', 'description', 'priceMinor', 'unit', 'archived', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['name', 'description', 'priceMinor', 'unit', 'archived', 'createdAt', 'updatedAt'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 80
         && d.description is string && d.description.size() <= 300
-        && d.price is number && d.price >= 0 && d.price <= 1000000000
+        // Precio en unidades menores enteras (centavos): sin coma flotante.
+        && d.priceMinor is int && d.priceMinor >= 0 && d.priceMinor <= 100000000000
         && d.unit in ['servicio', 'hora', 'dia', 'unidad']
         && d.archived is bool
         && d.createdAt is timestamp

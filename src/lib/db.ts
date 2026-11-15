@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   serverTimestamp,
   setDoc,
@@ -43,6 +44,10 @@ export function watchProfile(uid: string, cb: (p: Profile | null) => void, onErr
   )
 }
 
+export async function profileExists(uid: string) {
+  return (await getDoc(userRef(uid))).exists()
+}
+
 export function saveProfile(uid: string, p: Profile) {
   return setDoc(userRef(uid), {
     businessName: p.businessName.trim(),
@@ -56,6 +61,7 @@ export function watchServices(uid: string, cb: (s: Service[]) => void, onError: 
   // después solo se cobran los documentos que cambian.
   return onSnapshot(
     servicesRef(uid),
+    { includeMetadataChanges: true },
     (snap) => {
       const list: Service[] = snap.docs.map((d) => {
         const v = d.data({ serverTimestamps: 'estimate' })
@@ -63,11 +69,12 @@ export function watchServices(uid: string, cb: (s: Service[]) => void, onError: 
           id: d.id,
           name: String(v.name ?? ''),
           description: String(v.description ?? ''),
-          price: Number(v.price ?? 0),
+          priceMinor: Number.isSafeInteger(v.priceMinor) ? v.priceMinor : 0,
           unit: isUnit(v.unit) ? v.unit : 'servicio',
           archived: Boolean(v.archived),
           createdAt: toDate(v.createdAt),
           updatedAt: toDate(v.updatedAt),
+          pending: d.metadata.hasPendingWrites,
         }
       })
       list.sort((a, b) => (b.createdAt?.getTime() ?? Date.now()) - (a.createdAt?.getTime() ?? Date.now()))
@@ -80,7 +87,7 @@ export function watchServices(uid: string, cb: (s: Service[]) => void, onError: 
 const clean = (s: ServiceInput) => ({
   name: s.name.trim(),
   description: s.description.trim(),
-  price: Math.round(s.price * 100) / 100,
+  priceMinor: s.priceMinor,
   unit: s.unit,
 })
 

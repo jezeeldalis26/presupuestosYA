@@ -6,7 +6,20 @@ import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { dbErrorMessage } from '../lib/authErrors'
 import { createService, deleteService, setServiceArchived, updateService } from '../lib/db'
-import { LIMITS, UNIT_LABEL, UNITS, formatMoney, validateService, type Service, type ServiceInput, type Unit } from '../lib/model'
+import { QUEUED_MSG, commitWrite } from '../lib/write'
+import {
+  LIMITS,
+  UNIT_LABEL,
+  UNITS,
+  formatMoney,
+  minorToInput,
+  parseMoneyToMinor,
+  validateService,
+  type Currency,
+  type Service,
+  type ServiceInput,
+  type Unit,
+} from '../lib/model'
 
 type Tab = 'activos' | 'archivados'
 
@@ -34,8 +47,8 @@ export function TabuladorPage() {
 
   async function toggleArchive(s: Service) {
     try {
-      await setServiceArchived(uid, s.id, !s.archived)
-      toast(s.archived ? 'Servicio restaurado' : 'Servicio archivado')
+      const r = await commitWrite(setServiceArchived(uid, s.id, !s.archived))
+      toast(r === 'queued' ? QUEUED_MSG : s.archived ? 'Servicio restaurado' : 'Servicio archivado')
     } catch (e) {
       toast(dbErrorMessage(e), 'error')
     }
@@ -45,8 +58,8 @@ export function TabuladorPage() {
     if (!toDelete) return
     setDeleting(true)
     try {
-      await deleteService(uid, toDelete.id)
-      toast('Servicio eliminado')
+      const r = await commitWrite(deleteService(uid, toDelete.id))
+      toast(r === 'queued' ? QUEUED_MSG : 'Servicio eliminado')
       setToDelete(null)
     } catch (e) {
       toast(dbErrorMessage(e), 'error')
@@ -74,7 +87,7 @@ export function TabuladorPage() {
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 rounded-xl px-4 py-2 text-sm capitalize transition sm:flex-none ${
-                tab === t ? 'bg-sky-400/15 text-white shadow-[inset_0_0_0_1px_rgb(124_196_255/0.2)]' : 'text-mist hover:text-slate-200'
+                tab === t ? 'bg-brand-400/15 text-white shadow-[inset_0_0_0_1px_rgb(96_165_250/0.2)]' : 'text-mist hover:text-slate-200'
               }`}
             >
               {t} <span className="ml-1 text-xs text-mist">{counts[t]}</span>
@@ -139,11 +152,11 @@ export function TabuladorPage() {
         onClose={() => setEditing(null)}
         onSave={async (input) => {
           if (editing && editing !== 'new') {
-            await updateService(uid, editing.id, input)
-            toast('Servicio actualizado')
+            const r = await commitWrite(updateService(uid, editing.id, input))
+            toast(r === 'queued' ? QUEUED_MSG : 'Servicio actualizado')
           } else {
-            await createService(uid, input)
-            toast('Servicio registrado')
+            const r = await commitWrite(createService(uid, input))
+            toast(r === 'queued' ? QUEUED_MSG : 'Servicio registrado')
           }
           setEditing(null)
         }}
@@ -175,7 +188,7 @@ function ServiceCard({
   onDelete,
 }: {
   service: Service
-  currency: Parameters<typeof formatMoney>[1]
+  currency: Currency
   delay: number
   onEdit: () => void
   onArchive: () => void
@@ -222,10 +235,17 @@ function ServiceCard({
       </div>
       <div className="mt-auto flex items-end justify-between gap-3 pt-5">
         <div>
-          <p className="text-xl font-semibold tracking-tight text-white">{formatMoney(s.price, currency)}</p>
-          <p className="text-xs text-mist">{UNIT_LABEL[s.unit].per}</p>
+          <p className="text-xl font-semibold tracking-tight text-white">{formatMoney(s.priceMinor, currency)}</p>
+          <p className="flex items-center gap-2 text-xs text-mist">
+            {UNIT_LABEL[s.unit].per}
+            {s.pending && (
+              <span className="inline-flex items-center gap-1 text-amber-200/90" title="Pendiente de sincronizar">
+                <span className="size-1.5 animate-pulse rounded-full bg-amber-300" /> Sincronizando
+              </span>
+            )}
+          </p>
         </div>
-        <button onClick={onEdit} className="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-mist transition hover:border-sky-400/30 hover:text-sky-200 sm:opacity-0 sm:group-hover:opacity-100">
+        <button onClick={onEdit} className="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-mist transition hover:border-brand-400/30 hover:text-brand-200 sm:opacity-0 sm:group-hover:opacity-100">
           Editar
         </button>
       </div>
@@ -254,25 +274,26 @@ function ServiceForm({
 }: {
   open: boolean
   service: Service | null
-  currency: string
+  currency: Currency
   onClose: () => void
   onSave: (s: ServiceInput) => Promise<void>
 }) {
   const [name, setName] = useState(service?.name ?? '')
   const [description, setDescription] = useState(service?.description ?? '')
-  const [price, setPrice] = useState(service ? String(service.price) : '')
+  const [price, setPrice] = useState(service ? minorToInput(service.priceMinor, currency) : '')
   const [unit, setUnit] = useState<Unit>(service?.unit ?? 'servicio')
-  const [errors, setErrors] = useState<Partial<Record<keyof ServiceInput, string>>>({})
+  const [errors, setErrors] = useState<ReturnType<typeof validateService>>({})
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     setFormError('')
-    const input: ServiceInput = { name, description, price: price.trim() === '' ? NaN : Number(price.replace(',', '.')), unit }
-    const errs = validateService(input)
+    const priceMinor = parseMoneyToMinor(price, currency)
+    const errs = validateService({ name, description, priceMinor, unit })
     setErrors(errs)
-    if (Object.keys(errs).length) return
+    if (Object.keys(errs).length || priceMinor === null) return
+    const input: ServiceInput = { name, description, priceMinor, unit }
     setBusy(true)
     try {
       await onSave(input)
@@ -313,7 +334,7 @@ function ServiceForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="s-price">Precio ({currency})</label>
-            <input id="s-price" type="number" inputMode="decimal" min={0} step="0.01" className="field" placeholder="0,00" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <input id="s-price" type="text" inputMode="decimal" autoComplete="off" className="field" placeholder="0,00" value={price} onChange={(e) => setPrice(e.target.value)} />
             <FieldError text={errors.price} />
           </div>
           <div>
@@ -325,7 +346,7 @@ function ServiceForm({
                   key={u}
                   onClick={() => setUnit(u)}
                   className={`rounded-xl border px-2 py-2 text-[13px] transition ${
-                    unit === u ? 'border-sky-400/50 bg-sky-400/10 text-white' : 'border-white/10 text-mist hover:border-white/20 hover:text-slate-200'
+                    unit === u ? 'border-brand-400/50 bg-brand-400/10 text-white' : 'border-white/10 text-mist hover:border-white/20 hover:text-slate-200'
                   }`}
                 >
                   {UNIT_LABEL[u].one}

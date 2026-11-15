@@ -27,6 +27,7 @@ test('flujo completo: registro, preferencias, tabulador, sesión', async ({ page
 
   // Registro
   await page.goto('/registro')
+  await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
   await shot(page, '02-registro')
   await page.getByLabel('Nombre profesional o comercial').fill('Estudio Luna')
   await page.getByLabel('Correo electrónico').fill(mail)
@@ -46,6 +47,7 @@ test('flujo completo: registro, preferencias, tabulador, sesión', async ({ page
   await page.getByLabel('Moneda predeterminada').selectOption('BRL')
   await page.getByRole('button', { name: 'Guardar cambios' }).click()
   await expect(page.getByText('Preferencias guardadas')).toBeVisible()
+  await expect(page.getByText('Guardado', { exact: true })).toBeVisible()
   await noHorizontalOverflow(page)
   await shot(page, '04-preferencias')
 
@@ -67,13 +69,13 @@ test('flujo completo: registro, preferencias, tabulador, sesión', async ({ page
   await page.getByRole('button', { name: 'Registrar servicio' }).click()
   await expect(page.getByRole('heading', { name: 'Consultoría' })).toBeVisible()
   await expect(page.getByText('por hora')).toBeVisible()
-  await expect(page.getByText(/120,00/)).toBeVisible()
+  await expect(page.getByText('R$ 120,00')).toBeVisible()
 
   // Validación: precio vacío
   await page.getByRole('button', { name: 'Nuevo servicio' }).click()
   await page.getByLabel('Nombre del servicio').fill('Sin precio')
   await page.getByRole('button', { name: 'Registrar servicio' }).click()
-  await expect(page.getByText('Ingresa un precio válido.')).toBeVisible()
+  await expect(page.getByText(/Ingresa un precio válido/)).toBeVisible()
   await page.getByRole('button', { name: 'Cancelar' }).click()
 
   await noHorizontalOverflow(page)
@@ -82,10 +84,11 @@ test('flujo completo: registro, preferencias, tabulador, sesión', async ({ page
   // Editar
   const card = page.locator('article', { hasText: 'Diseño de logotipo' })
   await card.getByRole('button', { name: 'Editar', exact: true }).last().click()
+  await expect(page.getByLabel(/Precio/)).toHaveValue('450,00')
   await page.getByLabel(/Precio/).fill('500')
   await page.getByRole('button', { name: 'Guardar cambios' }).click()
   await expect(page.getByText('Servicio actualizado')).toBeVisible()
-  await expect(card.getByText(/500,00/)).toBeVisible()
+  await expect(card.getByText('R$ 500,00')).toBeVisible()
 
   // Archivar y restaurar
   await card.getByRole('button', { name: 'Opciones' }).click()
@@ -110,7 +113,10 @@ test('flujo completo: registro, preferencias, tabulador, sesión', async ({ page
   // Dashboard con datos
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Estudio Luna Creativa' })).toBeVisible()
-  await expect(page.getByText('BRL').first()).toBeVisible()
+  await expect(page.getByText('Moneda: BRL')).toBeVisible()
+  await expect(page.getByText('Actividad reciente')).toBeVisible()
+  await expect(page.getByText(/Registraste|Actualizaste|Archivaste/).first()).toBeVisible()
+  await expect(page.getByText('Continuar con Google')).toHaveCount(0)
   await shot(page, '07-dashboard')
 
   // Pendientes identificados

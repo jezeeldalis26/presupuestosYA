@@ -6,10 +6,10 @@ export function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   return (
     <span className={`inline-flex items-baseline font-semibold tracking-tight ${text}`}>
       <span className="text-white">Presupuestos</span>
-      <span className="relative bg-linear-to-br from-sky-300 to-sky-500 bg-clip-text font-bold text-transparent">
+      <span className="relative bg-linear-to-br from-brand-300 to-brand-500 bg-clip-text font-bold text-transparent">
         YA
       </span>
-      <span className="ml-0.5 inline-block size-1.5 translate-y-[-0.1em] rounded-full bg-sky-400 shadow-[0_0_12px_2px_rgb(124_196_255/0.7)]" />
+      <span className="ml-0.5 inline-block size-1.5 translate-y-[-0.1em] rounded-full bg-brand-400 shadow-[0_0_12px_2px_rgb(96_165_250/0.7)]" />
     </span>
   )
 }
@@ -19,7 +19,7 @@ export function Backdrop() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-night">
       <div className="absolute -top-40 -left-32 size-[34rem] animate-drift rounded-full bg-navy-700/40 blur-[120px]" />
-      <div className="absolute top-1/3 -right-40 size-[30rem] animate-drift rounded-full bg-sky-500/15 blur-[130px] [animation-delay:-6s]" />
+      <div className="absolute top-1/3 -right-40 size-[30rem] animate-drift rounded-full bg-brand-500/15 blur-[130px] [animation-delay:-6s]" />
       <div className="absolute -bottom-48 left-1/4 size-[28rem] animate-drift rounded-full bg-navy-800/50 blur-[120px] [animation-delay:-11s]" />
       <div className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.035)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
     </div>
@@ -60,8 +60,8 @@ export function EmptyState({
   return (
     <div className="glass flex animate-rise flex-col items-center px-6 py-14 text-center">
       <div className="relative mb-5">
-        <div className="absolute inset-0 rounded-3xl bg-sky-400/25 blur-2xl" />
-        <div className="relative grid size-16 place-items-center rounded-3xl border border-white/10 bg-linear-to-br from-navy-800 to-navy-950 text-sky-300">
+        <div className="absolute inset-0 rounded-3xl bg-brand-400/25 blur-2xl" />
+        <div className="relative grid size-16 place-items-center rounded-3xl border border-white/10 bg-linear-to-br from-navy-800 to-navy-950 text-brand-300">
           {icon}
         </div>
       </div>

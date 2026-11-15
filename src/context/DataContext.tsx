@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { watchProfile, watchServices } from '../lib/db'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { saveProfile, watchProfile, watchServices } from '../lib/db'
 import { DEFAULT_CURRENCY, type Profile, type Service } from '../lib/model'
 import { useAuth } from './AuthContext'
 
@@ -23,6 +23,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [services, setServices] = useState<Service[]>([])
   const [servicesLoading, setServicesLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const createdRef = useRef(false)
 
   useEffect(() => {
     if (!uid) return
@@ -39,6 +40,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       (p) => {
         setProfile(p)
         setProfileLoading(false)
+        // Cuentas de Google que volvieron por redirección: crear el perfil inicial.
+        if (!p && !createdRef.current && user?.providerData.some((x) => x.providerId === 'google.com')) {
+          createdRef.current = true
+          void saveProfile(uid, { businessName: (user.displayName ?? '').slice(0, 80), currency: DEFAULT_CURRENCY }).catch(console.error)
+        }
       },
       onError,
     )
@@ -54,6 +60,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       offProfile()
       offServices()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid])
 
   const value = useMemo<DataValue>(

@@ -35,7 +35,7 @@ export function ForgotPage() {
       title="Recupera tu contraseña"
       subtitle="Te enviaremos un enlace para crear una nueva."
       footer={
-        <Link to="/login" className="inline-flex items-center gap-1.5 font-medium text-sky-300 hover:text-sky-200">
+        <Link to="/login" className="inline-flex items-center gap-1.5 font-medium text-brand-300 hover:text-brand-200">
           <ArrowLeft className="size-4" /> Volver a iniciar sesión
         </Link>
       }

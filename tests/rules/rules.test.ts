@@ -43,7 +43,7 @@ const denied = (p: Promise<unknown>) => expect(p).rejects.toMatchObject({ code: 
 const service = (over: Record<string, unknown> = {}) => ({
   name: 'Diseño de logo',
   description: 'Tres propuestas',
-  price: 150,
+  priceMinor: 15000,
   unit: 'servicio',
   archived: false,
   createdAt: serverTimestamp(),
@@ -72,8 +72,11 @@ describe('preferencias (users/{uid})', () => {
     expect(snap.data()?.currency).toBe('BRL')
   })
 
-  it('rechaza moneda no soportada', () =>
-    denied(setDoc(doc(A.db, 'users', A.uid), { businessName: 'X', currency: 'BTC', updatedAt: serverTimestamp() })))
+  it.each(['BTC', 'COP', 'usd'])('rechaza moneda no soportada %s', (currency) =>
+    denied(setDoc(doc(A.db, 'users', A.uid), { businessName: 'X', currency, updatedAt: serverTimestamp() })))
+
+  it.each(['BRL', 'USD', 'EUR', 'VES'])('acepta %s', (currency) =>
+    setDoc(doc(A.db, 'users', A.uid), { businessName: 'Estudio Alice', currency, updatedAt: serverTimestamp() }))
 
   it('rechaza campos extra (p. ej. logo)', () =>
     denied(setDoc(doc(A.db, 'users', A.uid), { businessName: 'X', currency: 'USD', updatedAt: serverTimestamp(), logoUrl: 'x' })))
@@ -111,8 +114,11 @@ describe('tabulador (users/{uid}/services)', () => {
 
   it.each([
     ['nombre vacío', { name: '' }],
-    ['precio negativo', { price: -1 }],
-    ['precio como texto', { price: '100' }],
+    ['precio negativo', { priceMinor: -1 }],
+    ['precio como texto', { priceMinor: '100' }],
+    ['precio con decimales (no entero)', { priceMinor: 150.5 }],
+    ['precio excesivo', { priceMinor: 100000000001 }],
+    ['campo price antiguo', { price: 150 }],
     ['unidad inválida', { unit: 'mes' }],
     ['descripción > 300', { description: 'a'.repeat(301) }],
     ['campo extra', { color: 'rojo' }],
@@ -126,10 +132,10 @@ describe('tabulador (users/{uid}/services)', () => {
 
   it('el dueño edita y archiva', async () => {
     const ref = doc(A.db, 'users', A.uid, 'services', id)
-    await updateDoc(ref, { price: 200, updatedAt: serverTimestamp() })
+    await updateDoc(ref, { priceMinor: 20000, updatedAt: serverTimestamp() })
     await updateDoc(ref, { archived: true, updatedAt: serverTimestamp() })
     const snap = await getDoc(ref)
-    expect(snap.data()).toMatchObject({ price: 200, archived: true })
+    expect(snap.data()).toMatchObject({ priceMinor: 20000, archived: true })
   })
 
   it('no se puede modificar createdAt', () =>
@@ -139,7 +145,7 @@ describe('tabulador (users/{uid}/services)', () => {
     await denied(getDocs(collection(B.db, 'users', A.uid, 'services')))
     await denied(getDoc(doc(B.db, 'users', A.uid, 'services', id)))
     await denied(addDoc(collection(B.db, 'users', A.uid, 'services'), service()))
-    await denied(updateDoc(doc(B.db, 'users', A.uid, 'services', id), { price: 1, updatedAt: serverTimestamp() }))
+    await denied(updateDoc(doc(B.db, 'users', A.uid, 'services', id), { priceMinor: 1, updatedAt: serverTimestamp() }))
     await denied(deleteDoc(doc(B.db, 'users', A.uid, 'services', id)))
   })
 
